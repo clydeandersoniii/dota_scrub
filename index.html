@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <link rel="stylesheet" href="styles.css">
+    </head>
+
+    <div class='team' side='team'>
+        <button side='team' onclick='addRow("team")'>Add Hero</button>
+        <table id='team' side='team'>
+            <tr id='header'>
+                <th>Your Team</th>
+            </tr>
+        </table>
+    </div>
+<!--
+    <div class='opponent' side='team'>
+        <button side='team' onclick='addRow("opponent")'>Add Hero</button>
+        <table id='opponent' side='team'>
+            <tr id='header'>
+                <th>Opponent Team</th>
+            </tr>
+        </table>
+    </div>
+-->
+    <script>
+        function addRow(side) {
+            $('#' + side).append('<tr><th>Test</th></tr>')
+        }
+    </script>
+</html>
