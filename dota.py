@@ -41,6 +41,7 @@ while date < 1 or date > 5:
     date = int(input('Select a time range for data:\n1. week\n2. month\n3. 3 months\n4. 6 months\n5. year\n'))
 print()
 
+#WEB SCRAPING
 #request to dotabuff
 URL = 'https://www.dotabuff.com/heroes/' + hero + '/counters?date=' + dates[date - 1]
 headers = {

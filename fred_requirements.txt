@@ -1,0 +1,8 @@
+1. Enter range of heroes (1+)
+2. Enter data range
+3. Return countered by/counters for each hero
+4. Enter enemy heroes
+5. Return countered for each enemy hero
+6. Rank our heroes based on occurence in enemy countered by list
+
+Code:
