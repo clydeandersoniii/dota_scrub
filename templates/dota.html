@@ -3,7 +3,7 @@
 
 <head>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="/templates/styles.css">
     <title>Dota Scrubner</title>
 </head>
 
@@ -27,18 +27,17 @@
         </tr>
     </table>
 </div>
+<div class='opponent' side='team'>
+    <button side='team' onclick='addHero("opponent")'>Add Hero</button>
+    <table id='opponent' side='team'>
+        <tr id='header'>
+            <th>Opponent Team</th>
+        </tr>
+    </table>
+</div>
 <br /><br /><br /><br /><br /><br />
 <div class='heroinfo' side='team'>FUCK</div>
-<!--
-    <div class='opponent' side='team'>
-        <button side='team' onclick='addRow("opponent")'>Add Hero</button>
-        <table id='opponent' side='team'>
-            <tr id='header'>
-                <th>Opponent Team</th>
-            </tr>
-        </table>
-    </div>
--->
+
 <script>
     addHero.counter = 0;
     arrHeroes = []
@@ -60,9 +59,9 @@
                 }
                 identifiers = "side='" + side + "' class='hero" + addHero.counter + "'"
                 divStart = "<div " + identifiers + ">"
-                selector = "<select " + identifiers + " tooltip='parent' onchange='disableSelect(" + addHero.counter + ")'" + ">" + options + "</select>";
+                selector = "<select " + identifiers + " onchange='setHero(" + addHero.counter + ")'" + ">" + options + "</select>";
                 deleteButton = "<button " + identifiers + " onclick='deleteElement(" + addHero.counter + ")'>Delete</button>";
-                infoButton = "<button " + identifiers + " onclick='getHeroInfo(" + addHero.counter + ")'>Info</button>";
+                infoButton = "<button " + identifiers + " btnId='" + addHero.counter + "' style='visibility:hidden' onclick='getHeroInfo(" + addHero.counter + ")'>Info</button>";
                 linebreak = "<" + identifiers + " br />";
                 divEnd = "</div>"
                 addHero.counter++;
@@ -76,14 +75,17 @@
         $('.hero' + id).remove();
     }
 
-    function disableSelect(id) {
+    function setHero(id) {
+        heroName = String($('select.hero' + id).val()).replace(' ','_').replace('-','').toLowerCase()
+        $('div.hero' + id).prepend("<img class='heroimg' src='http://cdn.dota2.com/apps/dota2/images/heroes/" + heroName + "_sb.png'>")
         $('select.hero' + id).prop('disabled', true);
+        $('[btnId='+ id + ']').css('visibility','visible')
     }
 
     function getHeroInfo(id) {
         //http://18.218.105.177:5200/api/v1/dotahero?hero=invoker&range=2
         url = "http://18.218.105.177:5200/api/v1/dotahero?"
-        hero = "hero=" + $('select.hero' + id).val()
+        hero = "hero=\"" + $('select.hero' + id).val() + "\""
         range = "range=" + $('#range').val()
         fullURL = url + hero + "&" + range
         
@@ -93,15 +95,95 @@
             'url': fullURL,
             'type':'GET',
             'success': function (data) {
+                console.log(data);
+
                 $('.heroinfo').empty();
-                $('.heroinfo').text = data;
+
+                jsonData = JSON.parse(data)
+                header = "<h1>" + String(jsonData.hero).toUpperCase() + "</h1>"
+                lineBreak = "<br />"
+
+                //COUNTERS
+                hdrCounters = "<h2>Counters</h2>"
+                tblCountersStart = "<table class='counters'>"
+                tblCountersHead = "<tr><th></th><th class='heroname'>Hero</th><th class='herodata'>Advantage</th><th class='herodata'>Win Rate</th></tr>"
+                tblCountersBody = ""
+                jsonData.counters.forEach(item => {
+                    tblCountersBody += "<tr><td><img class='heroimg' src='http://cdn.dota2.com/apps/dota2/images/heroes/" + heroName + "_full.png'></td>" + 
+                        "<td class='heroname'>" + String(item.hero).toUpperCase() + 
+                        "</td><td class='herodata'>" + item.advantage + 
+                        "</td><td class='herodata'>" + item.winrate + "</td></tr>"
+                })
+                tblCountersEnd = "</table>"
+
+                counters = hdrCounters + tblCountersStart + tblCountersHead + tblCountersBody + tblCountersEnd
+
+                //COUNTERED BY
+                hdrCountered = "<h2>Countered By</h2>"
+                tblCounteredStart = "<table class='countered'>"
+                tblCounteredHead = "<tr><th></th><th class='heroname'>Hero</th><th class='herodata'>Disadvantage</th><th class='herodata'>Win Rate</th></tr>"
+                tblCounteredBody = ""
+                jsonData.countered.forEach(item => {
+                    heroName = String(item.hero).replace(' ','_').replace('-','').toLowerCase()
+                    tblCounteredBody += "<tr><td><img class='heroimg' src='http://cdn.dota2.com/apps/dota2/images/heroes/" + heroName + "_full.png'></td>" + 
+                        "<td class='heroname'>" + String(item.hero).toUpperCase() + 
+                        "</td><td class='herodata'>" + item.disadvantage + 
+                        "</td><td class='herodata'>" + item.winrate + "</td></tr>"
+                })
+                tblCounteredEnd = "</table>"
+
+                countered = hdrCountered + tblCounteredStart + tblCounteredHead + tblCounteredBody + tblCounteredEnd
+
+                $('.heroinfo').html(header + lineBreak + counters + lineBreak + countered);
             }
         })
     }
 </script>
+
 <style>
     .heroinfo {
         border: 1px solid black;
+        margin: auto;
+        text-align: center;
+    }
+
+    .opponent, .team {
+        display:inline-block;
+    }
+
+    .opponent {
+        float:right;
+    }
+
+    table {
+        margin: auto;
+    }
+
+    .heroname {
+        text-align:left;
+    }
+
+    .herodata {
+        text-align:right;
+    }
+
+    #team, #opponent {
+        text-align:right;
+    }
+
+    #header {
+        text-align:center;
+    }
+
+    .heroinfo img {
+        width: 25%;
+        height: auto;
+        text-align: left;
+    }
+
+    th {
+        text-align:left;
+        width:10%
     }
 </style>
 

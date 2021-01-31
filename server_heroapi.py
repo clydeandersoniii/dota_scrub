@@ -15,7 +15,7 @@ def home():
 @app.route('/api/v1/dotahero', methods=['GET'])
 def respond():
     # here we want to get the value of user (i.e. ?hero=some-value&range=other-value)
-    hero = request.args.get('hero')
+    hero = request.args.get('hero').replace('"','')
     timerange = int(request.args.get('range'))
     data = dota.getHeroData(hero,timerange)
     return data

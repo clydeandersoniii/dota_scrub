@@ -11,7 +11,8 @@ def getHeroData(hero,date):
 
     #WEB SCRAPING
     #request to dotabuff
-    URL = 'https://www.dotabuff.com/heroes/' + heroLookup + '/counters?date=' + dates[date - 1]
+    URL = 'https://www.dotabuff.com/heroes/' + heroLookup.lower() + '/counters?date=' + dates[date - 1]
+    print(URL)
     headers = {
         'User-Agent':'Mozilla/5.0'
     }
