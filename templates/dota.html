@@ -27,6 +27,7 @@
         </tr>
     </table>
 </div>
+<br /><br /><br /><br /><br /><br />
 <div class='heroinfo' side='team'>FUCK</div>
 <!--
     <div class='opponent' side='team'>
@@ -77,6 +78,25 @@
 
     function disableSelect(id) {
         $('select.hero' + id).prop('disabled', true);
+    }
+
+    function getHeroInfo(id) {
+        //http://18.218.105.177:5200/api/v1/dotahero?hero=invoker&range=2
+        url = "http://18.218.105.177:5200/api/v1/dotahero?"
+        hero = "hero=" + $('select.hero' + id).val()
+        range = "range=" + $('#range').val()
+        fullURL = url + hero + "&" + range
+        
+        console.log(fullURL)
+
+        $.ajax({
+            'url': fullURL,
+            'type':'GET',
+            'success': function (data) {
+                $('.heroinfo').empty();
+                $('.heroinfo').text = data;
+            }
+        })
     }
 </script>
 <style>
