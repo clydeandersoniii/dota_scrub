@@ -109,6 +109,7 @@
                 tblCountersHead = "<tr><th></th><th class='heroname'>Hero</th><th class='herodata'>Advantage</th><th class='herodata'>Win Rate</th></tr>"
                 tblCountersBody = ""
                 jsonData.counters.forEach(item => {
+                    heroName = String(item.hero).replace(' ','_').replace('-','').toLowerCase()
                     tblCountersBody += "<tr><td><img class='heroimg' src='http://cdn.dota2.com/apps/dota2/images/heroes/" + heroName + "_full.png'></td>" + 
                         "<td class='heroname'>" + String(item.hero).toUpperCase() + 
                         "</td><td class='herodata'>" + item.advantage + 
@@ -179,11 +180,6 @@
         width: 25%;
         height: auto;
         text-align: left;
-    }
-
-    th {
-        text-align:left;
-        width:10%
     }
 </style>
 
