@@ -5,4 +5,9 @@
 5. Return countered for each enemy hero
 6. Rank our heroes based on occurence in enemy countered by list
 
-Code:
+Code snippets:
+
+#Get heroes
+URL = 'https://api.opendota.com/api/heroes'
+response = requests.get(URL)
+heroes = response.json()

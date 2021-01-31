@@ -1,0 +1,17 @@
+{
+    "hero":"invoker",
+    "counters":[
+        {
+            "hero":"medusa",
+            "advantage":".0273",
+            "winrate":".5278"
+        }
+    ],
+    "countered":[
+        {
+            "hero":"medusa",
+            "disadvantage":".0273",
+            "winrate":".5278"
+        }
+    ]
+}

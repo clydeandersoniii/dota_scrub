@@ -1,83 +1,86 @@
 import requests
 import json
 from bs4 import BeautifulSoup
-import sys, argparse
 
-"""
-parser = argparse.ArgumentParser(description='Get heroes that are countered and counter your hero.')
-parser.add_argument('--hero', help='The name of your hero. Case insensitve.',type=str)
-parser.add_argument('--timeframe','-tf', help='The timeframe for data. 1 = 1wk, 2 = 1mo, 3 = 3mo, 4 = 6mo, 5 = 1yr. default=5',type=int,default=5)
+def getHeroData(hero,date):
+    #vars
+    dates = ['week','month','3month','6month','year']
 
-args = parser.parse_args()
-"""
+    #templar assassin -> templar-assasin
+    heroLookup = hero.replace(' ','-')
 
-#Get heroes
-URL = 'https://api.opendota.com/api/heroes'
-response = requests.get(URL)
-heroes = response.json()
+    #WEB SCRAPING
+    #request to dotabuff
+    URL = 'https://www.dotabuff.com/heroes/' + heroLookup + '/counters?date=' + dates[date - 1]
+    headers = {
+        'User-Agent':'Mozilla/5.0'
+    }
+    page = requests.get(URL,headers=headers)
 
-#vars
-"""
-hero = 0
-date = args['timeframe']
-dates = ['week','month','3month','6month','year']
-"""
-hero = ''
-date = -1
-exists = -1
-dates = ['week','month','3month','6month','year']
+    soup = BeautifulSoup(page.content, 'html.parser')
 
-#get valid hero input
-while exists == -1:
-    hero = input('Name of your hero: ').lower()
-    for dict in heroes:
-        if dict['localized_name'].lower() == hero:
-            exists = 1
+    #grab sections
+    content = soup.find_all('section', class_='counter-outline')
 
-hero = hero.replace(' ','-')
+    td_arr = []
 
-#get valid time range
-while date < 1 or date > 5:
-    date = int(input('Select a time range for data:\n1. week\n2. month\n3. 3 months\n4. 6 months\n5. year\n'))
-print()
+    #keep track of which pass this is
+    #1 = disadvantages
+    #2 = advantages
+    x = 1
 
-#WEB SCRAPING
-#request to dotabuff
-URL = 'https://www.dotabuff.com/heroes/' + hero + '/counters?date=' + dates[date - 1]
-headers = {
-    'User-Agent':'Mozilla/5.0'
-}
-page = requests.get(URL,headers=headers)
+    #data will comprise of a mainHero and two arrays of heroes they counter/countered by
+    data = {"hero":hero,
+            "counters":[],
+            "countered":[]}
 
-soup = BeautifulSoup(page.content, 'html.parser')
+    #for each section
+    for elem in content:
+        #HEADERS
+        #1st pass: COUNTERED BY
+        #2nd pass: COUNTERS
 
-#grab sections
-content = soup.find_all('section', class_='counter-outline')
+        #HEROES
+        #counterhero comprises of a hero that the mainHero counters
+        counterHero = {"hero":"",
+                        "advantage":"",
+                        "winrate":""}
 
-td_arr = []
+        #counteredHero comprises of a hero that counters the mainHero
+        counteredHero = {"hero":"",
+                        "disadvantage":"",
+                        "winrate":""}
 
-#for each section
-for elem in content:
-    #get the header text
-    header = elem.find('header')
-    print(header.text.upper(), end = '\n')
+        #get all the rows
+        table = elem.find('tbody')
+        rows = table.find_all('tr')
+        #for each tr
+        for tr in rows:
+            #find all td
+            td = tr.find_all('td')
+            #for each td
+            for value in td:
+                td_arr.append(value.text)
 
-    col_headers = elem.find_all('th')
-    for th in col_headers:
-        print('{0:20s}'.format(th.text), end = '')
+            name = td_arr[1]
+            percent = td_arr[2]
+            winrate = td_arr[3]
 
-    print()
-    print('-' * 60)
+            #x == 1 --> tracking countered by
+            if x == 1:
+                counteredHero = {"hero":name,
+                    "disadvantage":percent,
+                    "winrate":winrate}
+                data['countered'].append(counteredHero)
+            else:
+                counterHero = {"hero":name,
+                    "advantage":percent,
+                    "winrate":winrate}
+                data['counters'].append(counterHero)
 
-    #get all the rows
-    table = elem.find('tbody')
-    rows = table.find_all('tr')
-    #for each tr
-    for tr in rows:
-        #find all td
-        td = tr.find_all('td')
-        #for each td
-        for value in td:
-            td_arr.append(value.text)
-        print('{0:20s}{1:20s}{2:20s}'.format(td_arr[1],td_arr[2],td_arr[3]), end = '\n'*2)
-        td_arr.clear()
+            td_arr.clear()
+
+        x += 1
+    
+    data = json.dumps(data)
+    return data
