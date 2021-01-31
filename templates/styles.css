@@ -1,0 +1,15 @@
+table, td, th {
+    border: 1px solid;
+}
+#team {
+    border-color: green;
+}
+#opponent {
+    border-color: red;
+}
+.team {
+    float: left;
+}
+.opponent {
+    float: right;
+}

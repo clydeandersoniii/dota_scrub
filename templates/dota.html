@@ -1,31 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-        <link rel="stylesheet" href="styles.css">
-        <title>Dota Scrubner</title>
-    </head>
 
-    <div class='settings'>
-        <label id='range'>Time Range:</label>
-        <select id="range">
-            <!--dates = ['week','month','3month','6month','year']-->
-            <option value="1">1 Week</option>
-            <option value="2">1 Month</option>
-            <option value="3">3 Months</option>
-            <option value="4">6 Months</option>
-            <option value="5">1 Year</option>
-        </select>
-    </div>
-    </br></br>
-    <div class='team' side='team'>
-        <button side='team' onclick='addRow("team")'>Add Hero</button>
-        <table id='team' side='team'>
-            <tr id='header'>
-                <th>Your Team</th>
-            </tr>
-        </table>
-    </div>
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+    <title>Dota Scrubner</title>
+</head>
+
+<div class='settings'>
+    <label id='rangelabel'>Time Range:</label>
+    <select id='range'>
+        <!--dates = ['week','month','3month','6month','year']-->
+        <option value="1">1 Week</option>
+        <option value="2">1 Month</option>
+        <option value="3">3 Months</option>
+        <option value="4">6 Months</option>
+        <option value="5">1 Year</option>
+    </select>
+</div>
+<br /><br />
+<div class='team' side='team'>
+    <button side='team' onclick='addHero("team")'>Add Hero</button>
+    <table id='team' side='team'>
+        <tr id='header'>
+            <th>Your Team</th>
+        </tr>
+    </table>
+</div>
+<div class='heroinfo' side='team'>FUCK</div>
 <!--
     <div class='opponent' side='team'>
         <button side='team' onclick='addRow("opponent")'>Add Hero</button>
@@ -36,9 +38,51 @@
         </table>
     </div>
 -->
-    <script>
-        function addRow(side) {
-            $('#' + side).append('<tr><th>Test</th></tr>')
-        }
-    </script>
+<script>
+    addHero.counter = 0;
+    arrHeroes = []
+
+    function addHero(side) {
+        $.ajax({
+            'url': 'https://api.opendota.com/api/heroes',
+            'type': 'GET',
+            'success': function (data) {
+                console.log(data)
+
+                //Sort alphabetically
+                data.sort((a, b) => (a.localized_name > b.localized_name) ? 1 : -1)
+
+                //Create all options items for the dropdown
+                options = "<option disabled selected value> -- select an option -- </option>"
+                for (hero in data) {
+                    options += "<option value='" + data[hero].localized_name + "'>" + data[hero].localized_name + "</option>"
+                }
+                identifiers = "side='" + side + "' class='hero" + addHero.counter + "'"
+                divStart = "<div " + identifiers + ">"
+                selector = "<select " + identifiers + " tooltip='parent' onchange='disableSelect(" + addHero.counter + ")'" + ">" + options + "</select>";
+                deleteButton = "<button " + identifiers + " onclick='deleteElement(" + addHero.counter + ")'>Delete</button>";
+                infoButton = "<button " + identifiers + " onclick='getHeroInfo(" + addHero.counter + ")'>Info</button>";
+                linebreak = "<" + identifiers + " br />";
+                divEnd = "</div>"
+                addHero.counter++;
+
+                $('#' + side).append(divStart + selector + deleteButton + infoButton + linebreak + divEnd);
+            },
+        });
+    }
+
+    function deleteElement(id) {
+        $('.hero' + id).remove();
+    }
+
+    function disableSelect(id) {
+        $('select.hero' + id).prop('disabled', true);
+    }
+</script>
+<style>
+    .heroinfo {
+        border: 1px solid black;
+    }
+</style>
+
 </html>
