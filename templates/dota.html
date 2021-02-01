@@ -3,307 +3,345 @@
 
 <head>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <link rel="stylesheet" href="/templates/styles.css">
     <link rel="icon"
         href="https://static.wikia.nocookie.net/dota2_gamepedia/images/6/64/Favicon.ico/revision/latest?cb=20180105190509">
     <title>Dota Scrubner</title>
 </head>
 
-<div class='settings'>
-    <label id='rangelabel'>Time Range:</label>
-    <select id='range'>
-        <!--dates = ['week','month','3month','6month','year']-->
-        <option value="1">1 Week</option>
-        <option value="2">1 Month</option>
-        <option value="3">3 Months</option>
-        <option value="4">6 Months</option>
-        <option value="5">1 Year</option>
-    </select>
-    <label>*Click "Info" of a hero to refresh after changing time range</label>
-</div>
-<br /><br />
-<div class='team' side='team'>
-    <button side='team' onclick='addHeroSelector("team")'>Add Hero</button>
-    <table id='team' side='team'>
-        <tbody id='header'>
-            <tr >
-                <th>Your Team</th>
-            </tr>
-        </tbody>
-    </table>
-</div>
-<div class='opponent' side='opponent'>
-    <button side='opponent' onclick='addHeroSelector("opponent")'>Add Hero</button>
-    <table id='opponent' side='opponent'>
-        <tbody id='header'>
-            <tr >
-                <th>Your Team</th>
-            </tr>
-        </tbody>
-    </table>
-</div>
-<br /><br /><br /><br /><br /><br />
-<div class='heroinfo'></div>
+<body>
+    <div class='settings'>
+        <label id='rangelabel'>Time Range:</label>
+        <select onchange='disableTimeRange()' id='range'>
+            <!--dates = ['week','month','3month','6month','year']-->
+            <option disabled selected value> -- select an option -- </option>
+            <option value="1">1 Week</option>
+            <option value="2">1 Month</option>
+            <option value="3">3 Months</option>
+            <option value="4">6 Months</option>
+            <option value="5">1 Year</option>
+        </select>
+        <label>*Refresh to change time range</label><!--
+        <label id='teamsize'>Team Size:</label>
+        <select id='size' onchange='setTeamSizes(this)'>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option selected='selected' value="5">5</option>
+        </select> -->
+    </div>
+    <br /><br />
+    <div class='team' side='team'>
+        <button side='team' onclick='addHeroSelector("team")'>Add Hero</button>
+        <table id='team' side='team'>
+            <tbody id='header'>
+                <tr>
+                    <th>Your Team</th>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class='opponent' side='opponent'>
+        <button side='opponent' onclick='addHeroSelector("opponent")'>Add Hero</button>
+        <table id='opponent' side='opponent'>
+            <tbody id='header'>
+                <tr>
+                    <th>Opponent's Team</th>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <br /><br /><br /><br /><br /><br />
+    <div class='heroinfo'></div>
 
-<script>
-    addHeroSelector.counter = 0;
-    arrTeamHeroes = []
-    arrOpponentHeroes = []
+    <script>
+        addHeroSelector.counter = 0;
+        addHeroSelector.teamcounter = 0;
+        addHeroSelector.oppcounter = 0;
+        teamSize = 5;
+        arrTeamHeroes = []
+        arrOpponentHeroes = []
 
-    function addHeroSelector(side) {
-        $.ajax({
-            'url': 'https://api.opendota.com/api/heroes',
-            'type': 'GET',
-            'success': function (data) {
-                console.log(data)
-
-                //Sort alphabetically
-                data.sort((a, b) => (a.localized_name > b.localized_name) ? 1 : -1)
-
-                //Create all options items for the dropdown
-                options = "<option disabled selected value> -- select an option -- </option>"
-                for (hero in data) {
-                    options += "<option value='" + data[hero].localized_name + "'>" + data[hero].localized_name + "</option>"
-                }
-                identifiers = "side='" + side + "' class='hero" + addHeroSelector.counter + "'"
-                divStart = "<tr><td><div " + identifiers + ">"
-                selector = "<select " + identifiers + " onchange='setHeroSelector(" + addHeroSelector.counter + ")'" + ">" + options + "</select>";
-                deleteButton = "<button " + identifiers + " onclick='deleteHero(" + addHeroSelector.counter + ")'>Delete</button>";
-                infoButton = "<button " + identifiers + " btnId='" + addHeroSelector.counter + "' style='visibility:hidden' onclick='loadHeroInfo(" + addHeroSelector.counter + ")'>Info</button>";
-                rankingLabel = "<label " + identifiers + "></label>" 
-
-                linebreak = "<" + identifiers + " br />";
-                divEnd = "</div></td></tr>"
-                addHeroSelector.counter++;
-
-                $('#' + side).append(divStart + selector + deleteButton + infoButton + rankingLabel + linebreak + divEnd);
-            },
-        });
-    }
-
-    function deleteHero(id) {
-        deletedHero = $('select.hero' + id).val();
-        deleteFrom = $('select.hero' + id).attr('side');
-
-        index = 0;
-
-        if (deleteFrom === 'team') {
-            arrTeamHeroes.forEach((object) => {
-                if (object[1].hero !== deletedHero) {index++}
-                arrTeamHeroes.splice(index,1);
-            })
-        } else {
-            arrOpponentHeroes.forEach((object) => {
-                if (object[1].hero !== deletedHero) {index++}
-                arrOpponentHeroes.splice(index,1);
-            })
+        function disableTimeRange(object) {
+            $('#range').prop('disabled', true);
         }
 
-        $('.hero' + id).remove();
-        rankHeroes();
-    }
-
-    function setHeroSelector(id) {
-        selectedHero = $('select.hero' + id).val();
-
-        //Get the selected hero from the dropdown and format it for pulling the thumbnail from the dota2 cdn
-        heroName = String(selectedHero.replace(' ', '_').replace('-', '').toLowerCase());
-        //Prepend a thumbnail of the hero
-        $('div.hero' + id).prepend("<img class='heroimg' src='http://cdn.dota2.com/apps/dota2/images/heroes/" + heroName + "_sb.png'>");
-        //Disable the select control so the hero can't be changed
-        $('select.hero' + id).prop('disabled', true);
-        //Show the info button now that a hero has been chosen
-        $('[btnId=' + id + ']').css('visibility', 'visible');
-
-        cacheHero(id);
-    }
-
-    function rankHeroes() {
-        try {
-            //for each hero
-            arrTeamHeroes.forEach(object => {
-                //get count of hero occurrence in other hero list
-                currHero = object[1].hero; //<-- hero object
-                object[0] = 0 //reset counter
-
-                //update hero count in its array
-                arrOpponentHeroes.forEach(object2 => {
-                    //for each hero's countered by list
-                    object2[1].countered.forEach(object3 => {
-                        if (currHero === object3.hero) {
-                            object[0]++;
-                        }
-                    })
-                })
-
-                $('label.hero' + object[2]).text('')
-                $('label.hero' + object[2]).text('⭐'.repeat(object[0]))
-            })
-
-            arrOpponentHeroes.forEach(object => {
-                //get count of hero occurrence in other hero list
-                currHero = object[1].hero; //<-- hero object
-                object[0] = 0 //reset counter
-
-                //update hero count in its array
-                arrTeamHeroes.forEach(object2 => {
-                    //for each hero's countered by list
-                    object2[1].countered.forEach(object3 => {
-                        if (currHero === object3.hero) {
-                            object[0]++;
-                        }
-                    })
-                })
-            
-                $('label.hero' + object[2]).text('')
-                $('label.hero' + object[2]).text('⭐'.repeat(object[0]))
-            })
-            
-            //append stars to respective label
-        } catch (error) {
-            
-        }
-    }
-
-    function cacheHero(id) {
-        //http://18.221.162.90:5200/api/v1/dotahero?hero=invoker&range=2
-        url = "http://18.221.162.90:5200/api/v1/dotahero?";
-        hero = "hero=\"" + $('select.hero' + id).val() + "\"";
-        range = "range=" + $('#range').val();
-        fullURL = url + hero + "&" + range;
-
-        //Retrieve the side attr from the selector to determine which array to push the hero to
-        pushTo = $('select.hero' + id).attr('side');
-
-        //GET hero info
-        $.ajax({
-            'url': fullURL,
-            'type': 'GET',
-            'success': function (data) {
-                //push to the appropriate array
-                if (pushTo === 'team') {
-                    arrTeamHeroes.push([0, JSON.parse(data), id])
-                } else {
-                    arrOpponentHeroes.push([0,JSON.parse(data), id])
+        function addHeroSelector(side) {
+            if (side === 'team'){
+                if (addHeroSelector.teamcounter == teamSize){
+                    alert(`Cannot add more than ${teamSize} heroes to a team!`);
+                    return;
                 }
-                rankHeroes();
+                else {addHeroSelector.teamcounter++;}
+            } else
+            {
+                if (addHeroSelector.oppcounter == teamSize){
+                    alert('Cannot add more than 5 heroes to a team!');
+                    return;
+                }
+                else {addHeroSelector.oppcounter++;}
             }
-        });
-    }
 
-    function loadHeroInfo(id) {
-        $('.heroinfo').empty();
+            $.ajax({
+                'url': 'https://api.opendota.com/api/heroes',
+                'type': 'GET',
+                'success': function (data) {
+                    console.log(data)
 
-        selectedHero = $('select.hero' + id).val();
+                    //Sort alphabetically
+                    data.sort((a, b) => (a.localized_name > b.localized_name) ? 1 : -1)
 
-        //use the side attr of the selector to determine which array to pull from
-        pullFrom = $('select.hero' + id).attr('side');
-        jsonData = null
+                    //Create all options items for the dropdown
+                    options = "<option disabled selected value> -- select an option -- </option>"
+                    for (hero in data) {
+                        options += "<option value='" + data[hero].localized_name + "'>" + data[hero].localized_name + "</option>"
+                    }
+                    identifiers = "side='" + side + "' class='hero" + addHeroSelector.counter + "'"
+                    divStart = "<tr><td><div " + identifiers + ">"
+                    selector = "<select " + identifiers + " onchange='setHeroSelector(" + addHeroSelector.counter + ")'" + ">" + options + "</select>";
+                    deleteButton = "<button " + identifiers + " onclick='deleteHero(" + addHeroSelector.counter + ")'>Delete</button>";
+                    infoButton = "<button " + identifiers + " btnId='" + addHeroSelector.counter + "' style='visibility:hidden' onclick='loadHeroInfo(" + addHeroSelector.counter + ")'>Info</button>";
+                    rankingLabel = "<label " + identifiers + "></label>"
 
-        if (pullFrom === 'team'){
-            arrTeamHeroes.forEach((object) => {
-                if (object[1].hero === selectedHero) {jsonData = object[1]}
-            })
-        } else {
-            arrOpponentHeroes.forEach((object) => {
-                if (object[1].hero === selectedHero) {jsonData = object[1]}
-            })
+                    linebreak = "<" + identifiers + " br />";
+                    divEnd = "</div></td></tr>"
+                    addHeroSelector.counter++;
+
+                    $('#' + side).append(divStart + selector + deleteButton + infoButton + rankingLabel + linebreak + divEnd);
+                },
+            });
         }
 
-        header = "<h1>" + String(jsonData.hero).toUpperCase() + "</h1>"
-        lineBreak = "<br />"
+        function deleteHero(id) {
+            deletedHero = $('select.hero' + id).val();
+            deleteFrom = $('select.hero' + id).attr('side');
 
-        //COUNTERS
-        hdrCounters = "<h2>Counters</h2>"
-        tblCountersStart = "<table class='counters'>"
-        tblCountersHead = "<tr><th></th><th class='heroname'>Hero</th><th class='herodata'>Advantage</th><th class='herodata'>Win Rate</th></tr>"
-        tblCountersBody = ""
-        jsonData.counters.forEach(item => {
-            heroName = String(item.hero).replace(' ', '_').replace('-', '').toLowerCase()
-            tblCountersBody += "<tr><td><img class='heroimg' src='http://cdn.dota2.com/apps/dota2/images/heroes/" + heroName + "_full.png'></td>" +
-                "<td class='heroname'>" + String(item.hero).toUpperCase() +
-                "</td><td class='herodata'>" + item.advantage +
-                "</td><td class='herodata'>" + item.winrate + "</td></tr>"
-        })
-        tblCountersEnd = "</table>"
+            index = 0;
 
-        counters = hdrCounters + tblCountersStart + tblCountersHead + tblCountersBody + tblCountersEnd
+            if (deleteFrom === 'team') {
+                arrTeamHeroes.forEach((object) => {
+                    if (object[1].hero !== deletedHero) { index++ }
+                    arrTeamHeroes.splice(index, 1);
+                })
+                addHeroSelector.teamcounter--;
+            } else {
+                arrOpponentHeroes.forEach((object) => {
+                    if (object[1].hero !== deletedHero) { index++ }
+                    arrOpponentHeroes.splice(index, 1);
+                })
+                addHeroSelector.oppcounter--;
+            }
 
-        //COUNTERED BY
-        hdrCountered = "<h2>Countered By</h2>"
-        tblCounteredStart = "<table class='countered'>"
-        tblCounteredHead = "<tr><th></th><th class='heroname'>Hero</th><th class='herodata'>Disadvantage</th><th class='herodata'>Win Rate</th></tr>"
-        tblCounteredBody = ""
-        jsonData.countered.forEach(item => {
-            heroName = String(item.hero).replace(' ', '_').replace('-', '').toLowerCase()
-            tblCounteredBody += "<tr><td><img class='heroimg' src='http://cdn.dota2.com/apps/dota2/images/heroes/" + heroName + "_full.png'></td>" +
-                "<td class='heroname'>" + String(item.hero).toUpperCase() +
-                "</td><td class='herodata'>" + item.disadvantage +
-                "</td><td class='herodata'>" + item.winrate + "</td></tr>"
-        })
-        tblCounteredEnd = "</table>"
+            $('.hero' + id).remove();
+            rankHeroes();
+        }
 
-        countered = hdrCountered + tblCounteredStart + tblCounteredHead + tblCounteredBody + tblCounteredEnd
+        function setHeroSelector(id) {
+            selectedHero = $('select.hero' + id).val();
 
-        $('.heroinfo').html(header + lineBreak + counters + lineBreak + countered);
-    }
-</script>
+            //Get the selected hero from the dropdown and format it for pulling the thumbnail from the dota2 cdn
+            heroName = String(selectedHero.replace(' ', '_').replace('-', '').toLowerCase());
+            //Prepend a thumbnail of the hero
+            $('div.hero' + id).prepend("<img class='heroimg' src='http://cdn.dota2.com/apps/dota2/images/heroes/" + heroName + "_sb.png'>");
+            //Disable the select control so the hero can't be changed
+            $('select.hero' + id).prop('disabled', true);
+            //Show the info button now that a hero has been chosen
+            $('[btnId=' + id + ']').css('visibility', 'visible');
 
-<style>
-    .heroinfo {
-        margin: auto;
-        text-align: center;
-    }
+            cacheHero(id);
+        }
 
-    .opponent,.team {
-        display: inline-block;
-    }
+        function rankHeroes() {
+            try {
+                //for each hero
+                arrTeamHeroes.forEach(object => {
+                    //get count of hero occurrence in other hero list
+                    currHero = object[1].hero; //<-- hero object
+                    object[0] = 0 //reset counter
 
-    .opponent {
-        float: right;
-    }
+                    //update hero count in its array
+                    arrOpponentHeroes.forEach(object2 => {
+                        //for each hero's countered by list
+                        object2[1].countered.forEach(object3 => {
+                            if (currHero === object3.hero) {
+                                object[0]++;
+                            }
+                        })
+                    })
 
-    table {
-        margin: auto;
-    }
+                    $('label.hero' + object[2]).text('')
+                    $('label.hero' + object[2]).text('⭐'.repeat(object[0]))
+                })
 
-    .heroname {
-        text-align: left;
-    }
+                arrOpponentHeroes.forEach(object => {
+                    //get count of hero occurrence in other hero list
+                    currHero = object[1].hero; //<-- hero object
+                    object[0] = 0 //reset counter
 
-    .herodata {
-        text-align: right;
-    }
+                    //update hero count in its array
+                    arrTeamHeroes.forEach(object2 => {
+                        //for each hero's countered by list
+                        object2[1].countered.forEach(object3 => {
+                            if (currHero === object3.hero) {
+                                object[0]++;
+                            }
+                        })
+                    })
 
-    #team,#opponent {
-        text-align: right;
-    }
+                    $('label.hero' + object[2]).text('')
+                    $('label.hero' + object[2]).text('⭐'.repeat(object[0]))
+                })
 
-    #header {
-        text-align: center;
-    }
+                //append stars to respective label
+            } catch (error) {
 
-    .heroinfo img {
-        width: 25%;
-        height: auto;
-        text-align: left;
-    }
+            }
+        }
 
-    td {
-        width: 25%;
-    }
+        function cacheHero(id) {
+            //http://18.221.162.90:5200/api/v1/dotahero?hero=invoker&range=2
+            url = "http://18.221.162.90:5200/api/v1/dotahero?";
+            hero = "hero=\"" + $('select.hero' + id).val() + "\"";
+            range = "range=" + $('#range').val();
+            fullURL = url + hero + "&" + range;
 
-    .team div, .team td {
-        margin: auto;
-        text-align:left;
-        width: 75%;
-    }
+            //Retrieve the side attr from the selector to determine which array to push the hero to
+            pushTo = $('select.hero' + id).attr('side');
 
-    .opponent div, .opponent td {
-        margin:auto;
-        text-align:left;
-        width:75%;
-    }
-</style>
+            //GET hero info
+            $.ajax({
+                'url': fullURL,
+                'type': 'GET',
+                'success': function (data) {
+                    //push to the appropriate array
+                    if (pushTo === 'team') {
+                        arrTeamHeroes.push([0, JSON.parse(data), id])
+                    } else {
+                        arrOpponentHeroes.push([0, JSON.parse(data), id])
+                    }
+                    rankHeroes();
+                }
+            });
+        }
+
+        function loadHeroInfo(id) {
+            $('.heroinfo').empty();
+
+            selectedHero = $('select.hero' + id).val();
+
+            //use the side attr of the selector to determine which array to pull from
+            pullFrom = $('select.hero' + id).attr('side');
+            jsonData = null
+
+            if (pullFrom === 'team') {
+                arrTeamHeroes.forEach((object) => {
+                    if (object[1].hero === selectedHero) { jsonData = object[1] }
+                })
+            } else {
+                arrOpponentHeroes.forEach((object) => {
+                    if (object[1].hero === selectedHero) { jsonData = object[1] }
+                })
+            }
+
+            header = "<h1>" + String(jsonData.hero).toUpperCase() + "</h1>"
+            lineBreak = "<br />"
+
+            //COUNTERS
+            hdrCounters = "<h2>Counters</h2>"
+            tblCountersStart = "<table class='counters'>"
+            tblCountersHead = "<tr><th></th><th class='heroname'>Hero</th><th class='herodata'>Advantage</th><th class='herodata'>Win Rate</th></tr>"
+            tblCountersBody = ""
+            jsonData.counters.forEach(item => {
+                heroName = String(item.hero).replace(' ', '_').replace('-', '').toLowerCase()
+                tblCountersBody += "<tr><td><img class='heroimg' src='http://cdn.dota2.com/apps/dota2/images/heroes/" + heroName + "_full.png'></td>" +
+                    "<td class='heroname'>" + String(item.hero).toUpperCase() +
+                    "</td><td class='herodata'>" + item.advantage +
+                    "</td><td class='herodata'>" + item.winrate + "</td></tr>"
+            })
+            tblCountersEnd = "</table>"
+
+            counters = hdrCounters + tblCountersStart + tblCountersHead + tblCountersBody + tblCountersEnd
+
+            //COUNTERED BY
+            hdrCountered = "<h2>Countered By</h2>"
+            tblCounteredStart = "<table class='countered'>"
+            tblCounteredHead = "<tr><th></th><th class='heroname'>Hero</th><th class='herodata'>Disadvantage</th><th class='herodata'>Win Rate</th></tr>"
+            tblCounteredBody = ""
+            jsonData.countered.forEach(item => {
+                heroName = String(item.hero).replace(' ', '_').replace('-', '').toLowerCase()
+                tblCounteredBody += "<tr><td><img class='heroimg' src='http://cdn.dota2.com/apps/dota2/images/heroes/" + heroName + "_full.png'></td>" +
+                    "<td class='heroname'>" + String(item.hero).toUpperCase() +
+                    "</td><td class='herodata'>" + item.disadvantage +
+                    "</td><td class='herodata'>" + item.winrate + "</td></tr>"
+            })
+            tblCounteredEnd = "</table>"
+
+            countered = hdrCountered + tblCounteredStart + tblCounteredHead + tblCounteredBody + tblCounteredEnd
+
+            $('.heroinfo').html(header + lineBreak + counters + lineBreak + countered);
+        }
+    </script>
+
+    <style>
+        .heroinfo {
+            margin: auto;
+            text-align: center;
+        }
+
+        .opponent,
+        .team {
+            display: inline-block;
+        }
+
+        .opponent {
+            float: right;
+        }
+
+        table {
+            margin: auto;
+        }
+
+        .heroname {
+            text-align: left;
+        }
+
+        .herodata {
+            text-align: right;
+        }
+
+        #team,
+        #opponent {
+            text-align: right;
+        }
+
+        #header {
+            text-align: center;
+        }
+
+        .heroinfo img {
+            width: 25%;
+            height: auto;
+            text-align: left;
+        }
+
+        td {
+            width: 25%;
+        }
+
+        .team div,
+        .team td {
+            margin: auto;
+            text-align: left;
+            width: 75%;
+        }
+
+        .opponent div,
+        .opponent td {
+            margin: auto;
+            text-align: left;
+            width: 75%;
+        }
+    </style>
+</body>
 
 </html>
