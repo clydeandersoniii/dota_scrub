@@ -1,8 +1,11 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 
 <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <link rel="icon"
         href="https://static.wikia.nocookie.net/dota2_gamepedia/images/6/64/Favicon.ico/revision/latest?cb=20180105190509">
     <title>Dota Scrubner</title>
@@ -142,7 +145,10 @@
             //Get the selected hero from the dropdown and format it for pulling the thumbnail from the dota2 cdn
             heroName = String(selectedHero.replace(' ', '_').replace('-', '').toLowerCase());
             //Prepend a thumbnail of the hero
-            $('div.hero' + id).prepend("<img class='heroimg' src='http://cdn.dota2.com/apps/dota2/images/heroes/" + heroName + "_sb.png'>");
+
+            img = "<img class='heroimg' src='http://cdn.dota2.com/apps/dota2/images/heroes/" + heroName + "_full.png' alt='Not Found' onerror=this.src='https://wallpapercave.com/wp/wp3164257.jpg'>"
+
+            $('div.hero' + id).prepend(img);
             //Disable the select control so the hero can't be changed
             $('select.hero' + id).prop('disabled', true);
             //Show the info button now that a hero has been chosen
@@ -253,7 +259,7 @@
             tblCountersBody = ""
             jsonData.counters.forEach(item => {
                 heroName = String(item.hero).replace(' ', '_').replace('-', '').toLowerCase()
-                tblCountersBody += "<tr><td><img class='heroimg' src='http://cdn.dota2.com/apps/dota2/images/heroes/" + heroName + "_full.png'></td>" +
+                tblCountersBody += "<tr><td><img class='heroimg' src='http://cdn.dota2.com/apps/dota2/images/heroes/" + heroName + "_full.png' alt='Not Found' onerror=this.src='https://wallpapercave.com/wp/wp3164257.jpg'></td>" +
                     "<td class='heroname'>" + String(item.hero).toUpperCase() +
                     "</td><td class='herodata'>" + item.advantage +
                     "</td><td class='herodata'>" + item.winrate + "</td></tr>"
@@ -269,7 +275,7 @@
             tblCounteredBody = ""
             jsonData.countered.forEach(item => {
                 heroName = String(item.hero).replace(' ', '_').replace('-', '').toLowerCase()
-                tblCounteredBody += "<tr><td><img class='heroimg' src='http://cdn.dota2.com/apps/dota2/images/heroes/" + heroName + "_full.png'></td>" +
+                tblCounteredBody += "<tr><td><img class='heroimg' src='http://cdn.dota2.com/apps/dota2/images/heroes/" + heroName + "_full.png' alt='Not Found' onerror=this.src='https://wallpapercave.com/wp/wp3164257.jpg'></td>" +
                     "<td class='heroname'>" + String(item.hero).toUpperCase() +
                     "</td><td class='herodata'>" + item.disadvantage +
                     "</td><td class='herodata'>" + item.winrate + "</td></tr>"
@@ -318,12 +324,25 @@
             text-align: center;
         }
 
+        img {
+            width:150px;
+            height:auto;
+        }
+
+        div.team #header td {
+            box-shadow:25px 25px 50px 0  rgb(27, 57, 77) inset, -25px -25px 50px 0 rgb(27, 57, 77) inset;
+        }
+        
+        div.opponent #header td {
+            box-shadow:25px 25px 50px 0  rgb(27, 77, 35) inset, -25px -25px 50px 0 rgb(27, 77, 35) inset;
+        }
+
         .heroinfo img {
-            width: 25%;
+            width: 200px;
             height: auto;
             text-align: left;
         }
-
+        
         td {
             width: 25%;
         }
@@ -332,16 +351,68 @@
         .team td {
             margin: auto;
             text-align: left;
-            width: 75%;
+            width: 85%;
         }
 
         .opponent div,
         .opponent td {
             margin: auto;
             text-align: left;
-            width: 75%;
+            width: 85%;
+        }
+
+        body {
+            background:rgb(78, 77, 78);
+            color:white;
+        }
+
+        table.counters, table.countered {
+            font-size:x-large;
+        }
+
+        table.counters tr:nth-child(even) {
+            
+            box-shadow:50px 50px 50px 0  rgb(77, 35, 27) inset, -50px -50px 50px 0 rgb(77, 35, 27) inset;
+        }
+        table.counters tr:nth-child(odd) {
+            
+            box-shadow:50px 50px 50px 0  rgb(105, 35, 35) inset, -50px -50px 50px 0  rgb(105, 35, 35) inset;
+        }
+
+        div.team tbody#header th {
+            background-color: rgba(9, 155, 240, 0.692);
+        }
+        div.team {
+            background: 1px solid rgba(9, 155, 240, 0.3);
+        }
+
+        table.countered tr:nth-child(even) {
+            box-shadow:50px 50px 50px 0  rgb(81, 48, 109) inset, -50px -50px 50px 0 rgb(81, 48, 109) inset;
+        }
+        table.countered tr:nth-child(odd) {
+            box-shadow:50px 50px 50px 0  rgb(101, 52, 143) inset, -50px -50px 50px 0  rgb(101, 52, 143) inset;
+        }
+
+        div.opponent tbody#header th {
+            background-color: rgba(13, 218, 13, 0.692);
+        }
+        div.opponent {
+            background: 1px solid rgba(13, 218, 13, 0.692);
+        }
+
+        button {
+            background-color: black;
+            color:white;
+        }
+
+        select {
+            background-color:black;
+            color:white;
         }
     </style>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 </body>
 
 </html>
