@@ -244,7 +244,7 @@
 
         function cacheHero(id) {
             //http://18.221.162.90:5200/api/v1/dotahero?hero=invoker&range=2
-            url = 'http://18.221.162.90:5000/api/v1/dotahero?';
+            url = 'http://18.221.162.90:5200/api/v1/dotahero?';
             hero = `hero=\"${$(`select.hero${id}`).val()}\"`;
             range = `range=${$('#range').val()}`;
             fullURL = `${url}${hero}&${range}`;
