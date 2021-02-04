@@ -16,7 +16,7 @@
 <body>
     <div class='settings'>
         <label class='range' id='rangelabel'>Time Range:</label>
-        <select onchange='disableTimeRange()' class='range' id='range'>
+        <select onchange='disableTimeRange()' class='range' id='range' title='Select the time range of data that will be used to calculate hero data.'>
             <!--dates = ['week','month','3month','6month','year']-->
             <option disabled selected value> -- select an option -- </option>
             <option value="1">1 Week</option>
@@ -38,6 +38,12 @@
                     </tbody>
                 </table>
             </div>
+            <div class='inputoutput'>
+                <h3 for='intputoutput'>Input/Output</h3>
+                <button id='heroinput' title='Input your saved heroes to quickly populate your favorite choices!'>Input</button>
+                <button id='herooutput' title='Output a formatted list of your selected heroes for quick reference in the future!' onclick='outputHeroes()'>Output</button>
+                <textarea id='inputoutput' name='intputoutput' rows='6'></textarea>
+            </div>
             <div class='opponent'>
                 <button class='opponent' onclick='addHeroSelector("opponent")'>Add Hero</button>
                 <h2 class='teamheader'>Opponent's Team</h2>
@@ -45,13 +51,15 @@
                     <tbody>
                     </tbody>
                 </table>
+
+                
             </div>
         </div>
         <div class='heroinfo'>
             <h1 class='header'>Hero</h1>
             <div class='counters'>
                 <h2>Counters</h2>
-                <table class='heroinfo counters w3-card-4'>
+                <table class='heroinfo counters w3-card-4' title='The selected hero counters these heroes.'>
                     <thead>
                         <tr>
                             <th class='img'></th>
@@ -67,7 +75,7 @@
             </div>
             <div class='countered'>
                 <h2>Countered By</h2>
-                <table class='heroinfo countered w3-card-4'>
+                <table class='heroinfo countered w3-card-4' title='The selected hero is countered by these h'>
                     <thead>
                         <tr>
                             <th class='img'></th>
@@ -227,7 +235,7 @@
 
         function cacheHero(id) {
             //http://18.221.162.90:5200/api/v1/dotahero?hero=invoker&range=2
-            url = 'http://18.221.162.90:5200/api/v1/dotahero?';
+            url = 'http://18.221.162.90:5000/api/v1/dotahero?';
             hero = `hero=\"${$(`select.hero${id}`).val()}\"`;
             range = `range=${$('#range').val()}`;
             fullURL = `${url}${hero}&${range}`;
@@ -314,6 +322,18 @@
             $('table.counters tbody').append(tblCountersBody);
             $('table.countered tbody').append(tblCounteredBody);
         }
+    
+        function outputHeroes() {
+            if (arrTeamHeroes.length > 0) {
+                $('textarea').val('');
+                output = []
+                arrTeamHeroes.forEach(object => {
+                    output.push({'hero':object[1].hero})
+                })
+                $('textarea').val(JSON.stringify(output));
+            }
+            
+        }
     </script>
 
     <style>
@@ -324,13 +344,44 @@
         div.myteam {
             float: left;
             margin: auto;
-            padding-left: 10em;
+            padding-left: 2em;
+            width:33%;
         }
 
         div.opponent {
             float: right;
             margin: auto;
-            padding-right: 10em;
+            padding-right: 2em;
+            width:33%;
+        }
+
+        div.inputoutput {
+            width:34%;
+        }
+
+        h3, #inputoutput{
+            width:80%;
+            margin-left: 10%;
+            margin-right:10%;
+        }
+
+        h3 {
+            text-align: center;
+        }
+
+        #inputoutput {
+            background: black;
+            color: white;
+        }
+
+        #heroinput {
+            float:left;
+            margin-left: 10%;
+        }
+
+        #herooutput {
+            float:right;
+            margin-right:10%;
         }
 
         table.myteam, table.opponent {
