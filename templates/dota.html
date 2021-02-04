@@ -32,21 +32,21 @@
         <div class='teams'>
             <div class='myteam'>
                 <button class='myteam' onclick='addHeroSelector("myteam")'>Add Hero</button>
-                <h2 class='teamheader'>My Team</h2>
+                <h2 class='myteam teamheader'>My Team</h2>
                 <table class='myteam w3-card-4'>
                     <tbody>
                     </tbody>
                 </table>
             </div>
             <div class='inputoutput'>
-                <h3 for='intputoutput'>Input/Output</h3>
-                <button id='heroinput' title='Input your saved heroes to quickly populate your favorite choices!'>Input</button>
-                <button id='herooutput' title='Output a formatted list of your selected heroes for quick reference in the future!' onclick='outputHeroes()'>Output</button>
+                <h3 for='intputoutput'>Load/Save</h3>
+                <button id='heroinput' title='Load your saved heroes to quickly populate your favorite choices!' onclick='inputHeroes()'>Load</button>
+                <button id='herooutput' title='Save a formatted list of your selected heroes for quick reference in the future!' onclick='outputHeroes()'>Save</button>
                 <textarea id='inputoutput' name='intputoutput' rows='6'></textarea>
             </div>
             <div class='opponent'>
                 <button class='opponent' onclick='addHeroSelector("opponent")'>Add Hero</button>
-                <h2 class='teamheader'>Opponent's Team</h2>
+                <h2 class='opponent teamheader'>Opponent's Team</h2>
                 <table class='opponent w3-card-4'>
                     <tbody>
                     </tbody>
@@ -93,9 +93,9 @@
     </div>
 
     <script>
-        addHeroSelector.counter = 0;
-        addHeroSelector.teamcounter = 0;
-        addHeroSelector.oppcounter = 0;
+        heroSelectorCounter = 0;
+        teamcounter = 0;
+        oppcounter = 0;
         arrTeamHeroes = []
         arrOpponentHeroes = []
 
@@ -118,40 +118,49 @@
                     for (hero in data) {
                         options += `<option value='${data[hero].localized_name.replace('\'', '')}'>${data[hero].localized_name}</option>`
                     }
-                    identifiers = `class='hero${addHeroSelector.counter}' side='${side}'`
+                    identifiers = `class='hero${heroSelectorCounter}' side='${side}'`
                     divStart = `<tr><td><div ${identifiers}>`
-                    selector = `<select ${identifiers} onchange='setHeroSelector(${addHeroSelector.counter})'>${options}</select>`;
-                    deleteButton = `<button ${identifiers} onclick='deleteHero(${addHeroSelector.counter})'>Delete</button>`;
-                    infoButton = `<button ${identifiers} btnId='${addHeroSelector.counter}' style='visibility:hidden' onclick='loadHeroInfo(${addHeroSelector.counter})'>Info</button>`;
-                    rankingLabel = `<label ${identifiers}></label>`
+                    selector = `<select ${identifiers} onchange='setHeroSelector(${heroSelectorCounter})'>${options}</select>`;
+                    deleteButton = `<button ${identifiers} onclick='deleteHero(${heroSelectorCounter})'>Delete</button>`;
+                    infoButton = `<button ${identifiers} btnId='${heroSelectorCounter}' style='visibility:hidden' onclick='loadHeroInfo(${heroSelectorCounter})'>Info</button>`;
+                    rankingLabel = `<br /><label ${identifiers}></label>`
 
-                    linebreak = `<${identifiers} br />`;
                     divEnd = '</div></td></tr>'
-                    addHeroSelector.counter++;
+                    heroSelectorCounter++;
 
-                    $(`table.${side} tbody`).append(divStart + selector + deleteButton + infoButton + rankingLabel + linebreak + divEnd);
+                    $(`table.${side} tbody`).append(divStart + selector + deleteButton + infoButton + rankingLabel + divEnd);
                 },
             });
         }
 
         function deleteHero(id) {
             deletedHero = $(`select.hero${id}`).val();
+            console.log(deletedHero);
             deleteFrom = $(`select.hero${id}`).attr('side');
 
             index = 0;
 
             if (deleteFrom === 'myteam') {
                 arrTeamHeroes.forEach((object) => {
-                    if (object[1].hero !== deletedHero) { index++ }
-                    arrTeamHeroes.splice(index, 1);
+                    if (object[1].hero !== deletedHero) {
+                        index++; 
+                    }
+                    else{
+                        arrTeamHeroes.splice(index, 1);
+                    }
+                    
                 })
-                addHeroSelector.teamcounter--;
+                teamcounter--;
             } else {
                 arrOpponentHeroes.forEach((object) => {
-                    if (object[1].hero !== deletedHero) { index++ }
-                    arrOpponentHeroes.splice(index, 1);
+                    if (object[1].hero !== deletedHero) {
+                        index++ 
+                    }
+                    else {
+                        arrOpponentHeroes.splice(index, 1);
+                    }
                 })
-                addHeroSelector.oppcounter--;
+                oppcounter--;
             }
 
             $(`.hero${id}`).remove();
@@ -325,15 +334,61 @@
     
         function outputHeroes() {
             if (arrTeamHeroes.length > 0) {
+                groupName = prompt('What would you like to name this group of heroes?','Your Team');
+
                 $('textarea').val('');
-                output = []
+
+                output = [{'groupName':groupName},{'heroes':[]}]
+
                 arrTeamHeroes.forEach(object => {
-                    output.push({'hero':object[1].hero})
+                    output[1].heroes.push({'hero':object[1].hero})
                 })
+
                 $('textarea').val(JSON.stringify(output));
-            }
-            
+            }  
         }
+
+        function inputHeroes() {
+            if ($('#range').val() === null) { 
+                alert('Please select a time range first!'); return;
+            }
+            else {
+                heroSelectorCounter = 0;
+                arrTeamHeroes = [];
+                $('table.myteam tbody').empty();
+
+                input = JSON.parse($('textarea').val());
+
+                $('h2.myteam').html(input[0].groupName);
+
+                input[1].heroes.forEach(object => {
+                    identifiers = `class='hero${heroSelectorCounter}' side='myteam'`
+                    divStart = `<tr><td><div ${identifiers}>`
+                    options = `<option value='${object.hero.replace('\'', '')}'>${object.hero}</option>`
+                    selector = `<select style='width:182px' ${identifiers} '>${options}</select>`;
+                    deleteButton = `<button ${identifiers} onclick='deleteHero(${heroSelectorCounter})'>Delete</button>`;
+                    infoButton = `<button ${identifiers} btnId='${heroSelectorCounter}' style='visibility:visible' onclick='loadHeroInfo(${heroSelectorCounter})'>Info</button>`;
+                    rankingLabel = `<br /><label ${identifiers}></label>`
+
+                    divEnd = '</div></td></tr>'
+
+                    $(`table.myteam tbody`).append(divStart + selector + deleteButton + infoButton + rankingLabel + divEnd);
+                    
+                    
+                    heroName = String(object.hero.replace(' ', '_').replace('-', '').toLowerCase());
+                    img = `<img class='heroimg' id='heroimg${heroSelectorCounter}' src='http://cdn.dota2.com/apps/dota2/images/heroes/${heroName}_full.png' alt='Not Found' onerror=this.src='https://wallpapercave.com/wp/wp3164257.jpg'>`
+                    $(`div.hero${heroSelectorCounter}`).prepend(img);
+                    
+                    $(`select.hero${heroSelectorCounter}`).prop('disabled', true);
+                    cacheHero(heroSelectorCounter);
+
+                    heroSelectorCounter++;
+                })
+
+                rankHeroes();
+            }
+        }
+
     </script>
 
     <style>
@@ -344,15 +399,27 @@
         div.myteam {
             float: left;
             margin: auto;
-            padding-left: 2em;
             width:33%;
+        }
+
+        h2.myteam, table.myteam {
+            width:80%;
+            margin:auto;
         }
 
         div.opponent {
             float: right;
             margin: auto;
-            padding-right: 2em;
             width:33%;
+        }
+
+        h2.opponent, table.opponent {
+            width:80%;
+            margin:auto;
+        }
+
+        h2.myteam, h2.opponent {
+            padding-bottom: 5px;
         }
 
         div.inputoutput {
@@ -389,11 +456,11 @@
         }
 
         table.myteam tbody tr {
-            box-shadow:25px 25px 50px 0  rgb(27, 57, 77) inset, -25px -25px 50px 0 rgb(27, 57, 77) inset;
+            box-shadow:50px 50px 50px 0  rgb(27, 57, 77) inset, -50px -50px 50px 0 rgb(27, 57, 77) inset;
         }
 
         table.opponent tbody tr {
-            box-shadow:25px 25px 50px 0  rgb(27, 77, 35) inset, -25px -25px 50px 0 rgb(27, 77, 35) inset;
+            box-shadow:50px 50px 50px 0  rgb(27, 77, 35) inset, -50px -50px 50px 0 rgb(27, 77, 35) inset;
         }
 
         div.heroinfo {
